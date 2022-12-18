@@ -23,149 +23,125 @@ for Pip users:
 
 ## Dataset
 
-Dataset contains 1873 audio files. Each audio file is 3 seconds long and has a sampling rate of 44.1 kHz. The dataset is
-divided into 8 classes: angry, calm, disgust, fear, happy, sad, surprise, and neutral. The dataset is available
-at [https://zenodo.org/record/1188976#.XqZ2J5NKjIU](https://zenodo.org/record/1188976#.XqZ2J5NKjIU)
-this is human voice dataset. for music there is a binary dataset with 2 classes: happy and sad. The dataset is available
-at [https://zenodo.org/record/1188976#.XqZ2J5NKjIU](https://zenodo.org/record/1188976#.XqZ2J5NKjIU)
-Happy and sad music dataset.
+The dataset contains 27,558 cell images with equal instances of parasitized and uninfected cells. There will be 13780 parasitized and 13780 uninfected cell samples. All these samples are present in the Google drive. Mount the Drive with Colab Notebook to access the data.
 
-## Feature Extraction
+## Exploratory Data Analysis(EDA):
+- Visualization of images
+- Class imbalance
+- Image size variability
 
-The features are extracted using librosa library. The features are extracted from the audio files and stored in a csv
-file. The features are extracted using the following function:
+Load any three images using the following code:
 
-    def extract_feature(file_name):
-        try:
-            audio, sample_rate = librosa.load(file_name, res_type='kaiser_fast')
-            mfccs = np.mean(librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40).T,axis=0)
-            chroma = np.mean(librosa.feature.chroma_stft(S=audio, sr=sample_rate).T,axis=0)
-            mel = np.mean(librosa.feature.melspectrogram(audio, sr=sample_rate).T,axis=0)
-            contrast = np.mean(librosa.feature.spectral_contrast(S=audio, sr=sample_rate).T,axis=0)
-            tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(audio), sr=sample_rate).T,axis=0)
-            return mfccs,chroma,mel,contrast,tonnetz
-        except Exception as e:
-            print("Error encountered while parsing file: ", file)
-            return None, None, None, None, None
+    img1 = cv2.imread('/content/drive/MyDrive/Cell-Img-Data/dataset/Parasitized/C100P61ThinF_IMG_20150918_144104_cell_162.png')
 
-### 1.1) What is librosa?
+    img2 = cv2.imread('/content/drive/MyDrive/Cell-Img-Data/dataset/Parasitized/C100P61ThinF_IMG_20150918_144104_cell_166.png')
 
-librosa is a python package for music and audio analysis.
-It provides the building blocks necessary to create music information
-retrieval systems. It is built on top of the scientific
-Python stack (numpy, scipy, and matplotlib) and is distributed under the 3-clause BSD license.
+    img3 = cv2.imread('/content/drive/MyDrive/Cell-Img-Data/dataset/Parasitized/C100P61ThinF_IMG_20150918_144104_cell_171.png')
 
-### 1.2) What is mfcc?
+To visualize the images:
 
-Mel-frequency cepstral coefficients (MFCCs) are coefficients that
-collectively make up an MFC. They are derived from a
-type of cepstral representation of the audio clip (a nonlinear
-"spectrum-of-a-spectrum").
+    fig = plt.figure(figsize=(18, 6))
+    axarr = fig.subplots(1, 3)
 
-### 1.3) What is chroma?
+    image = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
+    axarr[0].imshow(image)
 
-Chroma features are a set of features used in music information retrieval.
-They are based on the twelve different pitch classes, and are
-used to describe the distribution of pitches in a piece of music.
+    image = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
+    axarr[1].imshow(image)
 
-### 1.4) What is mel?
+    image = cv2.cvtColor(img3, cv2.COLOR_BGR2RGB)
+    axarr[2].imshow(image)
 
-Mel spectrogram is a representation of the short-term power spectrum of a sound, based on a linear
-cosine transform of a log power spectrum on a nonlinear mel scale of frequency.
+    plt.show()
+    
+ 
+ To check the number of samples in each folder:
+ 
+    source = '/content/drive/MyDrive/Cell-Img-Data/dataset/Parasitized'
+    dir1_lst = os.listdir(source)
+    print(len(dir1_lst))
+    
+ To check image size:
+ 
+    print(img1.shape)
+    print(img2.shape)
+    print(img3.shape)
+    
+## Data Splitting:
+The dataset is split into three groups namely
+- Training set (includes 75% of samples)
+- Validation set (includes 15% of samples)
+- Evaluation / Test set (includes 10% of samples)
 
-# To run this Project
+Create separate folders for train, validation and evaluation which includes Parasitized and Uninfected cells:
+    
+    os.mkdir("train")
+    
+    os.mkdir("valid")
+    
+    os.mkdir("eval")
+    
+    frame_dir = "/content/drive/MyDrive/Cell-Img-Data/dataset/Parasitized"
+    frame_dir_lst = os.listdir(frame_dir)
+    frame_dir_lst.sort()
 
-```bash
-source env/bin/activate
-cd src
-git clone https://github.com/ultralytics/yolov5.git
-cd yolov5
-pip install -r requirements.txt
-cd ..
-cd ..
-export PYTHONPATH=./src
-uvicorn main:app --reload
-```
+    output_dir1 = "/content/train/parasitized"
 
-for cond users:
+    if not os.path.exists(output_dir1):
+      os.mkdir(output_dir1)
 
-```bash
-conda activate env
-cd src
-git clone https://github.com/ultralytics/yolov5.git
-cd yolov5
-pip install -r requirements.txt
-cd ..
-cd ..
-export PYTHONPATH=./src
-uvicorn main:app --reload
-```
+    for image_nm in frame_dir_lst[:10335]:
+      img = cv2.imread(os.path.join(frame_dir,image_nm))
+      cv2.imwrite(os.path.join(output_dir1,image_nm),img)
 
-# To Train the model
 
-```bash
-source env/bin/activate
-python3 DataLoader.py
-python3 train.py --data path/to/audio/file/dir --model model_name
-```
+    output_dir2 = "/content/valid/parasitized"
 
-for cond users:
+    if not os.path.exists(output_dir2):
+      os.mkdir(output_dir2)
 
-```bash
-conda activate env
-python3 DataLoader.py
-python3 train.py --data path/to/audio/file/dir -m model_name
-```
+    for image_nm in frame_dir_lst[10335:12402]:
+      img = cv2.imread(os.path.join(frame_dir,image_nm))
+      cv2.imwrite(os.path.join(output_dir2,image_nm),img)
 
-## Results and Discussion
 
-Results are saved as confusion matrix and classification report. The model is trained on 80% of the dataset and tested
-on 20% of the dataset. The model is trained for 100 epochs. The model is trained using the following function:
 
-    def train_model(model, train_data, train_labels, test_data, test_labels, epochs, batch_size):
-        model.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size, validation_data=(test_data, test_labels))
-        return model
+    output_dir3 = "/content/eval/parasitized"
 
-Discussion: The model is trained on 80% of the dataset and tested on 20% of the dataset. The model is trained for 100
-epochs. The model is trained using the following function:
+    if not os.path.exists(output_dir3):
+      os.mkdir(output_dir3)
 
-    def train_model(model, train_data, train_labels, test_data, test_labels, epochs, batch_size):
-        model.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size, validation_data=(test_data, test_labels))
-        return model
+    for image_nm in frame_dir_lst[12402:]:
+      img = cv2.imread(os.path.join(frame_dir,image_nm))
+      cv2.imwrite(os.path.join(output_dir3,image_nm),img)
+      
+## Image Data Generator
+After splitting the data into three folders, use ImageDataGenerator to manage the data. It can be used to resize image, 
 
-by adding more data and training the model for more epochs, the accuracy of the model can be increased.
 
-## Deploying into fastapi
+## Model Architecture
+- Convolution layer with 9x9 kernel
+- Convolution layer with 6x6 kernel
+- Fully-connected layer with the appropriate number of neurons
+- Fully-connected layer with the appropriate number of neurons and a dropout of 50% probability
+- Fully-connected layer with the appropriate number of neurons
 
-```bash
-source env/bin/activate
-export PYTHONPATH=./src
-uvicorn main:app --reload
-```
+        initializer = tf.keras.initializers.GlorotUniform()
+        model = Sequential()
+        model.add(layers.Conv2D(input_shape=(150, 150, 3), filters=64,kernel_size=(9,9), padding="same",activation='relu'))
+        model.add(layers.MaxPooling2D((2, 2), strides=(2, 2)))
+        model.add(layers.Conv2D(64, (6, 6), activation='relu', padding='same', name='block1_conv1'))
+        model.add(layers.MaxPooling2D((2, 2), strides=(2, 2)))
+        model.add(layers.Flatten())
+        model.add(layers.Dense(256, activation='relu', kernel_initializer=initializer))
+        model.add(Dropout(0.5))
+        model.add(layers.Dense(128, activation='relu', kernel_initializer=initializer))
 
-## Yolov5
-
-```bash
-source env/bin/activate
-cd src
-git clone https://github.com/ultralytics/yolov5.git
-cd yolov5
-pip install -r requirements.txt
-cd ..
-cd ..
-python src/yolov5/detect.py 
-        --weights "src/weights/best.pt" 
-      --source data/img --data "src/config/edm8.yaml"
-       --name results/test
-```
-
-for ffmpeg 
-```bash
-conda install -c conda-forge ffmpeg
-```
+        layer = tf.keras.layers.Dense(1, kernel_initializer=initializer, activation='sigmoid')#The Glorot uniform initializer, also called Xavier uniform initializer.
+        model.add(layer)
 
 # Synopsys
 
-## Title of the Project : Emotion Detection using Audio
+## Title of the Project : Cell Image Disease Classification
 
-## Aim of the Project : To scrape video from Tiktok user and extract audio from the parsed video for classifying emotion of the music. 
+## Aim of the Project : To use the cell images and identify parasitized and uninfected cells.
